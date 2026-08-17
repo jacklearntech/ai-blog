@@ -1,0 +1,80 @@
+---
+title: "2026年8月17日，Jack的AI Blog诞生了"
+date: "2026-08-17"
+summary: "记录这个博客是如何通过 Claude Code 从零设计、开发、完善，上传到 GitHub Public Repo，并通过 Vercel 部署上线的全过程。"
+tags: ["博客", "Claude Code", "Vercel"]
+---
+
+今天是我的 AI Blog 正式上线的日子。这篇文章记录一下整个建站过程——从需求构思到代码实现，再到部署上线，全程由 **Claude Code** 协助完成。
+
+## 为什么建这个博客
+
+作为一个对 AI 和软件工程充满热情的人，我一直想有一个自己的技术博客来记录学习和思考。这次决定动手，并且尝试用一种新的方式来构建它：让 AI 编程助手参与整个开发流程。
+
+## 技术选型
+
+在 Claude Code 的建议下，我们选定了以下技术栈：
+
+- **Next.js 16** (App Router) — React 全栈框架，支持静态导出
+- **TypeScript** — 类型安全
+- **Tailwind CSS v4** — 原子化 CSS，零配置主题
+- **MDX** — Markdown + JSX，写文章时可以嵌入组件
+- **Shiki** — VS Code 级别的代码语法高亮
+- **Vercel** — 一键部署，自动 CI/CD
+
+选择静态导出（`output: 'export'`）是因为博客内容不需要服务端渲染，纯 HTML 加载最快，也最便宜（Vercel 免费额度完全够用）。
+
+## Claude Code 做了什么
+
+整个项目的搭建过程中，Claude Code 承担了绝大部分编码工作：
+
+### 1. 项目初始化
+
+通过 `create-next-app` 脚手架创建项目后，Claude Code 自动安装了 MDX 解析、代码高亮、RSS 生成等所有依赖，并处理了 npm 缓存权限问题。
+
+### 2. 架构设计与文档体系
+
+Claude Code 帮我建立了 `.ai/` 文档目录结构，包含架构文档、模块说明和架构决策记录（ADR）。这确保了每次修改都有据可查：
+
+```
+.ai/
+├── architecture.md        # 系统架构
+├── project_map.md         # 项目结构地图
+├── modules/               # 各模块详细文档
+└── decisions/             # 架构决策记录
+```
+
+### 3. 核心功能实现
+
+- **内容管线**：基于 `gray-matter` 解析 MDX frontmatter，支持标题、日期、摘要、标签等元数据
+- **页面路由**：首页文章列表、文章详情页、标签云、标签归档页，全部 SSG 预渲染
+- **代码高亮**：集成 `rehype-pretty-code` + Shiki，支持多种编程语言
+- **响应式设计**：移动端优先，阅读友好的排版
+- **暗色模式**：跟随系统偏好自动切换
+
+### 4. 问题解决
+
+构建过程中遇到了 Turbopack 与 `@next/mdx` 的兼容性问题——Turbopack 不支持动态导入 MDX 文件和序列化 rehype 插件选项。Claude Code 迅速定位问题，将方案切换为 `next-mdx-remote/rsc`，并记录了这一决策（ADR-001）。
+
+## 从 GitHub 到 Vercel
+
+项目作为 **GitHub Public Repo** 托管，部署流程非常简单：
+
+1. 将代码推送到 GitHub 公开仓库
+2. 在 Vercel 中导入该仓库
+3. Vercel 自动检测 Next.js 项目并完成配置
+4. 绑定自定义域名 `ai-blog-vercel.jacklearn.tech`
+5. 之后每次 push 到 main 分支，Vercel 自动重新构建部署
+
+整个过程从 `git push` 到站点可访问，只需要几分钟。
+
+## 后续计划
+
+这个博客会持续更新，主要方向包括：
+
+- AI 与大语言模型的学习笔记
+- 软件工程实践与工具链探索
+- Claude Code / AI 辅助编程的经验分享
+- 技术选型与架构设计的思考
+
+欢迎通过 RSS 订阅，或者直接在 GitHub 上提 Issue 交流。
