@@ -19,7 +19,7 @@ AI Blog is a statically-generated personal blog built with Next.js (App Router).
 | MDX Rendering| next-mdx-remote/rsc                 | Server-component MDX compilation       |
 | Code Highlight| rehype-pretty-code + Shiki         | VS Code-quality syntax highlighting    |
 | RSS          | rss + custom post-build script      | Static XML feed generation             |
-| Deployment   | Vercel (static export)              | Auto-deploy on push                    |
+| Deployment   | Vercel (static export)              | Auto-deploy on push, `vercel.json` sets `outputDirectory: "out"` |
 
 ## Data Flow
 
