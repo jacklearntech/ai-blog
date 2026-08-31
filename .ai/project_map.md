@@ -30,7 +30,7 @@ ai-blog/
 │   │
 │   ├── components/
 │   │   ├── Header.tsx            # Site navigation bar
-│   │   ├── Footer.tsx            # Site footer
+│   │   ├── Footer.tsx            # Site footer (ICP + 公安备案)
 │   │   ├── PostCard.tsx          # Post summary card (list view)
 │   │   └── TagList.tsx           # Tag badge list component
 │   │
