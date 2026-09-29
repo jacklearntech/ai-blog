@@ -37,7 +37,7 @@ DEPLOYED_SHA_FILE="$STATE_DIR/deployed-sha"
 FAILED_SHA_FILE="$STATE_DIR/failed-sha"
 
 # publish 默认纳入提交的路径（存在的才会被 add）
-DEFAULT_ADD_PATHS=(content src scripts ops public .gitignore next.config.ts package.json)
+DEFAULT_ADD_PATHS=(content src scripts ops public .gitignore next.config.ts package.json README.md vercel.json)
 
 # ---------- 参数 ----------
 MODE="${1:-}"

@@ -2,20 +2,31 @@
 
 这是我的个人技术博客，主要记录 AI、软件工程和技术探索方面的内容。
 
-整个站点用 [Next.js](https://nextjs.org/) + [Tailwind CSS v4](https://tailwindcss.com/) + [MDX](https://mdxjs.com/) 搭建，构建后是纯静态 HTML，部署在 Vercel 上。
+整个站点用 [Next.js](https://nextjs.org/) + [Tailwind CSS v4](https://tailwindcss.com/) + [MDX](https://mdxjs.com/) 搭建，构建后是纯静态 HTML。
+
+## 线上地址
+
+同一份代码同时部署在两个地方，**两个地址内容一致**：
+
+| 托管方           | 地址                              | 说明                                     |
+| ---------------- | --------------------------------- | ---------------------------------------- |
+| 阿里云轻量服务器 | https://www.jacklearn.tech        | 主站。Nginx 直接托管构建产物 `out/`      |
+| Vercel           | https://blog.jacklearn.tech       | 关联本仓库，push 到 `main` 后自动部署    |
+
+根域 https://jacklearn.tech 指向主站。
 
 ## 本地跑起来
 
 ```bash
 npm install        # 装依赖
 npm run dev        # 启动开发服务器，访问 http://localhost:3000
-npm run build      # 构建静态站点 + 生成 RSS
+npm run build      # 构建静态站点 + 生成 RSS + 校验产物路径
 npm start          # 预览构建产物
 ```
 
 ## 怎么写文章
 
-在 `content/` 目录下新建一个 `.mdx` 文件就行，文件名就是文章的 URL slug。文件开头用 YAML frontmatter 写元信息：
+在 `content/` 目录下新建一个 `.mdx` 文件就行，**文件名就是文章的 URL slug**。文件开头用 YAML frontmatter 写元信息：
 
 ```mdx
 ---
@@ -23,7 +34,6 @@ title: "文章标题"
 date: "2026-08-17"
 summary: "首页列表里显示的简短描述"
 tags: ["ai", "教程"]
-draft: false
 ---
 
 正文内容写在这里，支持完整的 Markdown 语法，还能嵌入 React 组件...
@@ -31,13 +41,28 @@ draft: false
 
 ### frontmatter 字段说明
 
-| 字段        | 必填 | 说明                                     |
-| ----------- | ---- | ---------------------------------------- |
-| `title`     | 是   | 文章标题                                 |
-| `date`      | 是   | 发布日期，格式 YYYY-MM-DD                |
-| `summary`   | 否   | 摘要，显示在首页文章列表里               |
-| `tags`      | 否   | 标签数组，用于分类和导航                 |
-| `draft`     | 否   | 设为 `true` 就不会出现在生产构建中       |
+| 字段      | 必填 | 说明                                                         |
+| --------- | ---- | ------------------------------------------------------------ |
+| `title`   | 是   | 文章标题                                                     |
+| `date`    | 是   | 发布日期，格式 `YYYY-MM-DD`                                  |
+| `summary` | 否   | 摘要，显示在首页文章列表里                                   |
+| `tags`    | 否   | 标签数组，用于分类和导航                                     |
+
+> ⚠️ `draft` 字段目前**不生效**。只有 RSS 生成脚本会跳过 `draft: true` 的文章，
+> 但文章列表和 `/posts/<slug>` 依然会生成。想「藏稿」只能先别把文件放进 `content/`。
+
+### 两条命名约定（重要）
+
+静态导出的产物文件名直接由路由参数决定，命名踩坑不会报错，只会让页面 404，所以写成硬约定：
+
+- **slug（文件名）必须纯 ASCII**，用 `-` 连接，例如 `my-first-post.mdx`。
+  它是 `/posts/<slug>` 的唯一入口，中文文件名会得到一个很难排查的 404。
+- **标签建议用 ASCII 单 token**（`Nginx`、`DevOps`），避免空格。带空格的标签虽然现在能正常访问，
+  但会让 URL 变成 `%20` 形式，不太好分享。
+- `title` / `summary` / 正文**随便用中文**，它们不参与文件名。
+
+构建末尾有一道守卫（`scripts/check-export-paths.ts`）会扫描产物，一旦发现文件名里出现 `%`
+就**直接让构建失败**，从而避免这类问题被悄悄部署上线。
 
 ## 项目结构
 
@@ -46,8 +71,8 @@ content/          # MDX 文章放这里
 src/app/          # Next.js 页面（App Router）
 src/components/   # React 组件
 src/lib/          # 工具函数（文章解析等）
-scripts/          # 构建脚本（RSS 生成）
-public/           # 静态资源
+scripts/          # 构建脚本（RSS 生成、产物路径守卫）
+ops/              # 部署脚本
 .ai/              # 项目文档（架构、模块说明、决策记录）
 ```
 
@@ -55,15 +80,22 @@ public/           # 静态资源
 
 项目使用静态导出（`output: 'export'`），可以部署到任何支持静态文件的地方：
 
-- **Vercel**：关联 GitHub 仓库后自动部署，push 即更新
-- **GitHub Pages**：把输出目录设为 `out/`
-- **其他静态托管**：直接把 `out/` 目录上传即可
+- **Vercel**：关联 GitHub 仓库后自动部署，push 即更新（配置见 `vercel.json`）
+- **自建服务器**：Nginx 直接指向 `out/` 目录；`ops/release.sh` 封装了完整的构建与上线流程
+- **其他静态托管**：把 `out/` 目录上传即可
+
+> **部署前提**：托管方需要支持「无扩展名 URL → 对应的 `.html` 文件」这种映射。
+> 纯静态模式下 Vercel 默认不开启，必须在 `vercel.json` 里打开 `cleanUrls`，
+> 否则站内所有 `/posts/xxx`、`/tags` 这类链接都会 404 —— 症状很迷惑：首页正常打开，
+> 但点任何一篇文章都挂。
 
 ### 环境变量
 
-| 变量         | 说明                          | 示例                              |
-| ------------ | ----------------------------- | --------------------------------- |
-| `SITE_URL`   | 站点域名，用于生成 RSS 链接   | `https://ai-blog-vercel.jacklearn.tech` |
+| 变量       | 说明                         | 示例                       |
+| ---------- | ---------------------------- | -------------------------- |
+| `SITE_URL` | 站点域名，用于生成 RSS 链接  | `https://www.jacklearn.tech` |
+
+未设置时会退回到脚本内的默认值。
 
 ## License
 
