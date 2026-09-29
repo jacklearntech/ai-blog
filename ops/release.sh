@@ -25,6 +25,8 @@ PREV="$APP_DIR/out.prev"
 BRANCH=main
 REMOTE_NAME=origin
 NODE_BIN=/www/server/nodejs/v24.19.0/bin
+PY_BIN=/usr/bin/python3
+[ -x "$PY_BIN" ] || PY_BIN=python3
 SITE_URL_VALUE=https://jacklearn.tech
 HOST_HEADER=jacklearn.tech
 
@@ -35,7 +37,7 @@ DEPLOYED_SHA_FILE="$STATE_DIR/deployed-sha"
 FAILED_SHA_FILE="$STATE_DIR/failed-sha"
 
 # publish 默认纳入提交的路径（存在的才会被 add）
-DEFAULT_ADD_PATHS=(content src ops public .gitignore next.config.ts package.json)
+DEFAULT_ADD_PATHS=(content src scripts ops public .gitignore next.config.ts package.json)
 
 # ---------- 参数 ----------
 MODE="${1:-}"
@@ -128,6 +130,33 @@ build_deploy() {
   [ -n "$post" ] && { check "/posts/${post%.html}" 200 || failed=1; }
 
   [ -f "$OUT/tags.html" ] && { check /tags 200 || failed=1; }
+
+  # 标签页逐个实测。标签可能含空格或非 ASCII，必须用**浏览器会发出的编码形态**去请求：
+  # 直接测磁盘上的原文名是测不出问题的，那正是这个 bug 藏了一个月的原因。
+  # 刻意只 WARN、不计入 failed：标签链接坏掉只影响导航，不该阻断整次发布。
+  if [ -f "$OUT/tags.html" ] && [ -d "$OUT/tags" ]; then
+    "$PY_BIN" -c "import os,sys,urllib.parse
+d=os.path.join(sys.argv[1],'tags')
+for n in sorted(os.listdir(d)):
+    if not n.endswith('.html'):
+        continue
+    t=n[:-5]
+    if any(c in t for c in '/?#'):
+        continue
+    print(urllib.parse.quote(t))" "$OUT" > /tmp/ai-blog-tagurls 2>>"$LOG" || true
+
+    local tbad=0 turl
+    while IFS= read -r turl; do
+      [ -z "$turl" ] && continue
+      check "/tags/$turl" 200 || tbad=$(( tbad + 1 ))
+    done < /tmp/ai-blog-tagurls
+
+    if [ "$tbad" = "0" ]; then
+      say "      标签页自检通过（$(grep -c . /tmp/ai-blog-tagurls) 个）"
+    else
+      say "      WARN  有 $tbad 个标签页不可访问（只告警，不阻断发布）"
+    fi
+  fi
 
   if [ "$failed" != "0" ]; then
     say "FAIL  上线自检未通过"

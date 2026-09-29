@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build && npx tsx scripts/generate-rss.ts",
+    "build": "next build && npx tsx scripts/generate-rss.ts && npx tsx scripts/check-export-paths.ts",
     "start": "npx serve out",
     "lint": "eslint"
   },
