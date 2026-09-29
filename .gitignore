@@ -42,3 +42,8 @@ next-env.d.ts
 
 # npm cache (used during setup)
 /tmp/npm-cache-tmp
+
+# 服务器本地产物（不属于仓库内容）
+/out.prev
+/.htaccess
+/.well-known/
