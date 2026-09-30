@@ -22,16 +22,28 @@ All routes use Next.js App Router with static site generation (SSG). Every page 
 `scripts/generate-rss.ts` (ADR-002), so there is no page component to hang a link off. The feed is
 surfaced from three places instead:
 
-| Entry point              | Location                                          | Purpose                                                        |
-| ------------------------ | ------------------------------------------------- | -------------------------------------------------------------- |
-| Homepage subscribe pill  | `src/app/page.tsx`                                | The visible button a reader actually clicks                     |
-| Footer link              | `src/components/Footer.tsx`                        | Reachable from article and tag pages as well                    |
-| Head autodiscovery       | `src/app/layout.tsx` → `metadata.alternates.types` | Lets a feed reader find the feed from the site URL alone        |
+| Entry point           | Location                                          | Purpose                                                 |
+| --------------------- | ------------------------------------------------- | ------------------------------------------------------- |
+| Header subscribe pill | `src/components/Header.tsx`                        | The visible button — every page, always top-right        |
+| Footer link           | `src/components/Footer.tsx`                        | A secondary text link, reachable once you scroll down    |
+| Head autodiscovery    | `src/app/layout.tsx` → `metadata.alternates.types` | Lets a feed reader find the feed from the site URL alone |
 
 The glyph is `src/components/RssIcon.tsx` — a hand-written inline SVG, so no icon-library dependency
 enters the client bundle.
 
-Two deliberate choices here, both easy to "fix" into a bug:
+**The visible pill lives in the header, not in the homepage body.** Subscribing is a "decide while
+reading" action, so the entry point belongs in the same spot on every page instead of only on the
+home page. On narrow screens the label collapses to the icon alone (`hidden sm:inline`); the
+`aria-label` on the anchor keeps the accessible name intact in either state.
+
+**The homepage has no visible `<h1>` — but it still has one.** The site name is already rendered
+once by the header, and a second visible copy in the body reads as duplication, not hierarchy. So
+the homepage heading is `sr-only`. Deleting it outright would have been the wrong fix: it is the
+page's semantic title, used by screen readers and search engines alike — visually hidden but present
+in the accessibility tree is the goal. Note that no build check can catch a mistake here; only a
+screen-reader user would notice.
+
+Two further choices here, both easy to "fix" into a bug:
 
 - **Every entry point uses the relative path `/rss.xml`.** Relative hrefs resolve against whichever
   host serves the page, which is exactly what is needed when the same build output is published to

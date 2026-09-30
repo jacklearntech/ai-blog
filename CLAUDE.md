@@ -115,11 +115,16 @@ npm run lint          # ESLint
   `SITE_URL` environment variable if set, otherwise from `canonicalOrigin` in `site.config.json`.
   If neither resolves, the **build fails** — there is deliberately no hard-coded default (ADR-002, ADR-005).
 - **RSS entry points — `/rss.xml` is not a route.** It only exists in `out/`, so the feed is linked
-  explicitly: a subscribe pill in `src/app/page.tsx`, a link in `src/components/Footer.tsx`, and a
+  explicitly: a subscribe pill in `src/components/Header.tsx` (top-right, on every page), a text link
+  in `src/components/Footer.tsx`, and a
   `<link rel="alternate" type="application/rss+xml">` from `metadata.alternates.types` in
   `src/app/layout.tsx` (autodiscovery for feed readers). All of them use the **relative** path
   `/rss.xml`, and `metadataBase` is read from `site.config.json` — **never hardcode a domain in
   `src/`**; a second copy of an address is exactly what ADR-005 exists to prevent.
+- **The site name is rendered visible exactly once, in the header.** The homepage heading is
+  `sr-only` and must stay that way: deleting the `<h1>` would remove the page's semantic title
+  (screen readers, search engines), while making it visible again re-creates the duplication the
+  header already covers. Nothing in the build checks this one, so it lives here as a rule.
 - **Metadata routes, not a `public` directory.** Machine-facing files live in `src/app/` as metadata
   routes — `src/app/robots.ts` generates `/robots.txt` and `src/app/sitemap.ts` generates
   `/sitemap.xml`, both at build time. There is no `public/` directory in this repo, and `public` is

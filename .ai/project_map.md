@@ -38,11 +38,11 @@ ai-blog/
 │   │       └── [tag]/page.tsx        # Posts filtered by tag
 │   │
 │   ├── components/
-│   │   ├── Header.tsx                # Site navigation bar
+│   │   ├── Header.tsx                # Navigation bar + RSS subscribe pill (top-right, all pages)
 │   │   ├── Footer.tsx                # Site footer (ICP + 公安备案)
 │   │   ├── PostCard.tsx              # Post summary card (list view)
 │   │   ├── TagList.tsx               # Tag badge list component
-│   │   └── RssIcon.tsx               # Inline RSS glyph (subscribe entries on homepage + footer)
+│   │   └── RssIcon.tsx               # Inline RSS glyph (header pill + footer link)
 │   │
 │   └── lib/
 │       ├── posts.ts                  # Core: read/parse/sort/filter MDX files

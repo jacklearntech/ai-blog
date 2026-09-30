@@ -90,10 +90,14 @@ still happily serving `/` (which maps to `index.html`).
 - **Post-build script for RSS**: a Node script writing directly to `out/rss.xml` is more reliable
   under static export than a Route Handler. See ADR-002.
 - **Make the feed discoverable, don't assume it will be guessed**: because `/rss.xml` has no route,
-  it is surfaced three ways — a subscribe pill on the homepage, a link in the footer, and a
+  it is surfaced three ways — a subscribe pill in `src/components/Header.tsx` (top-right, so it sits
+  in the same place on every page instead of only on the homepage), a link in the footer, and a
   `<link rel="alternate" type="application/rss+xml">` emitted from `metadata.alternates.types` in
   `src/app/layout.tsx`. All three use the relative path `/rss.xml`, and `metadataBase` is read from
   `site.config.json`, so no domain is duplicated into `src/`.
+- **One visible copy of the site name**: the header renders it, and the homepage heading is
+  `sr-only` rather than deleted — so the page still has a semantic `<h1>` without saying the same
+  thing twice on screen.
 - **Server as the content source, GitHub as backup**: publish runs commit → build → self-check →
   go live → push, so a broken build can never reach the remote. See
   `.ai/decisions/ADR-003-reverse-sync-publish.md`.
