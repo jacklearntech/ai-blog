@@ -1,3 +1,5 @@
+<!-- last-verified: 2026-09-30 -->
+
 # Styling Module
 
 ## Overview
@@ -11,7 +13,7 @@ Styling uses Tailwind CSS v4 with CSS-first configuration. No `tailwind.config.t
 
 ## Theme Tokens
 
-Defined via `@theme inline` in `globals.css`:
+Defined via `@theme inline` in `src/app/globals.css`:
 
 | Token              | Value                    | Usage                     |
 | ------------------ | ------------------------ | ------------------------- |
@@ -39,6 +41,13 @@ Prose styles use CSS custom properties (`var(--foreground)`) that automatically 
 
 ## Adding New Styles
 
-- **Global utilities**: Add to `globals.css` using Tailwind classes or `@theme`
+- **Global utilities**: Add to `src/app/globals.css` using Tailwind classes or `@theme`
 - **Component-scoped**: Use Tailwind utility classes directly in JSX
-- **New prose elements**: Add rules under `.prose` selector in `globals.css`
+- **New prose elements**: Add rules under `.prose` selector in `src/app/globals.css`
+
+## Note on this document
+
+This file is the least volatile of the module docs — it has not needed a factual correction, only a
+`last-verified` refresh. That is the expected shape of a healthy doc, and the reason the freshness
+check (`npm run check:docs`) treats a missing stamp as a warning rather than a failure: a stale date
+is a prompt to look, not proof of error.

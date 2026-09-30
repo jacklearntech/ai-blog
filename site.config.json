@@ -1,0 +1,35 @@
+{
+  "_readme": "站点对外事实的单一来源。文档、构建脚本、检查脚本都以此为准；改动只改这里，不要在别处复述。修改后记得同步更新 verifiedAt。",
+  "apexDomain": "jacklearn.tech",
+  "canonicalOrigin": "https://www.jacklearn.tech",
+  "sites": [
+    {
+      "host": "www.jacklearn.tech",
+      "origin": "https://www.jacklearn.tech",
+      "role": "primary",
+      "platform": "自建服务器 + Nginx",
+      "notes": "主站。Nginx 直接托管构建产物 out/，内容以此为准"
+    },
+    {
+      "host": "blog.jacklearn.tech",
+      "origin": "https://blog.jacklearn.tech",
+      "role": "mirror",
+      "platform": "Vercel",
+      "notes": "关联本仓库，push 到 main 自动部署。纯静态模式，需 cleanUrls 才能正确响应无扩展名 URL"
+    }
+  ],
+  "aliases": [
+    {
+      "host": "jacklearn.tech",
+      "notes": "根域，CNAME 指向主站 www.jacklearn.tech"
+    }
+  ],
+  "retired": [
+    {
+      "host": "ai-blog-vercel.jacklearn.tech",
+      "retiredAt": "2026-09-29",
+      "notes": "已废弃，整站返回 404。不要再在任何文档、代码或配置里引用"
+    }
+  ],
+  "verifiedAt": "2026-09-30"
+}

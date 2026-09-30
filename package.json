@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build && npx tsx scripts/generate-rss.ts && npx tsx scripts/check-export-paths.ts",
+    "check:docs": "npx tsx scripts/check-docs.ts",
     "start": "npx serve out",
     "lint": "eslint"
   },

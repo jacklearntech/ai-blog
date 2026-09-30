@@ -11,6 +11,7 @@
 #   - push 只在「构建 + 自检」都成功之后执行 → GitHub 上永远不会出现坏版本
 #   - 构建前备份 out/，失败自动回滚 → 线上不会白屏
 #   - publish 构建失败时撤销本次提交（文件改动保留）→ 修完可直接重试
+#   - publish 在暂存之前先跑 npm run check:docs → 不让「描述已过时」的文档跟着代码进仓库
 #   - deploy 模式在「本地有未推送提交」时跳过 → 不会与 publish 抢方向盘
 #   - flock 串行化；deployed-sha 记录「已成功部署的本地 HEAD」
 # ============================================================
@@ -27,7 +28,6 @@ REMOTE_NAME=origin
 NODE_BIN=/www/server/nodejs/v24.19.0/bin
 PY_BIN=/usr/bin/python3
 [ -x "$PY_BIN" ] || PY_BIN=python3
-SITE_URL_VALUE=https://jacklearn.tech
 HOST_HEADER=jacklearn.tech
 
 LOG=/www/wwwlogs/ai_blog.deploy.log
@@ -36,8 +36,22 @@ STATE_DIR=/var/lib/ai-blog-deploy
 DEPLOYED_SHA_FILE="$STATE_DIR/deployed-sha"
 FAILED_SHA_FILE="$STATE_DIR/failed-sha"
 
+# ---------- 站点地址：只从单一来源读，不在这里写死 ----------
+# 这里刻意不再硬编码域名。上一版把地址写死在脚本里，同一个事实在仓库里出现了好几份，
+# 结果是退役域名在文档里漏改、还在 RSS 生成脚本里当了兜底值，变成一个线上缺陷。
+# 读不到就中止：宁可让发布失败，也不要拿一个猜出来的地址去构建。
+SITE_CONFIG="$APP_DIR/site.config.json"
+SITE_URL_VALUE="$("$PY_BIN" -c "import json,sys;print(json.load(open(sys.argv[1]))['canonicalOrigin'])" "$SITE_CONFIG" 2>/dev/null || true)"
+if [ -z "$SITE_URL_VALUE" ]; then
+  printf '%s  FATAL  无法从 %s 读取 canonicalOrigin，中止（不做无来源的构建）\n' \
+    "$(date '+%F %T')" "$SITE_CONFIG" | tee -a "$LOG" >&2
+  exit 1
+fi
+
 # publish 默认纳入提交的路径（存在的才会被 add）
-DEFAULT_ADD_PATHS=(content src scripts ops public .gitignore next.config.ts package.json README.md vercel.json)
+# 漏一个路径的后果是「改动静默地没进提交」，而 git status 会一直显示它们未提交。
+# 这个清单已经因此漏过两次（先漏 scripts，再漏 README.md + vercel.json）——加顶层文件时务必同步。
+DEFAULT_ADD_PATHS=(content src scripts ops .ai .gitignore site.config.json vercel.json next.config.ts package.json README.md CLAUDE.md)
 
 # ---------- 参数 ----------
 MODE="${1:-}"
@@ -243,7 +257,27 @@ elif [ "$BEHIND" != "0" ]; then
     || { say "FAIL  rebase 出现冲突，请人工处理后重试"; exit 1; }
 fi
 
-# 2. 暂存并提交
+# 2. 文档一致性检查 —— 放在暂存之前：不通过就中止，连提交都不会产生，工作区保持干净
+#    check-docs 用 `git ls-files --cached --others --exclude-standard` 列举文件，
+#    所以「这次新写、还没 add 的文档」也在扫描范围内 —— 那恰恰是最需要查的部分。
+if [ "$FORCE" = "1" ]; then
+  say "WARN  --force：跳过文档一致性检查（不推荐，仅在检查器本身判断有误时使用）"
+else
+  export PATH="$NODE_BIN:$PATH"
+  DOCS_OUT=/tmp/ai-blog-checkdocs.out
+  if "$NODE_BIN/npm" run check:docs >"$DOCS_OUT" 2>&1; then
+    cat "$DOCS_OUT" >>"$LOG"
+    say "      文档一致性检查通过"
+  else
+    cat "$DOCS_OUT" >>"$LOG"
+    cat "$DOCS_OUT" >&2
+    say "FAIL  npm run check:docs 未通过，已中止发布（未产生任何提交）"
+    say "      修好后重新 publish；确认是检查器误判可用 --force 跳过"
+    exit 1
+  fi
+fi
+
+# 3. 暂存并提交
 ADD=()
 for p in "${DEFAULT_ADD_PATHS[@]}"; do
   [ -e "$APP_DIR/$p" ] && ADD+=("$p")
@@ -271,7 +305,7 @@ else
   say "      变更文件：$(git show --stat --format="" HEAD | sed '/^$/d' | tr '\n' ' ')"
 fi
 
-# 3. 构建 + 上线（失败则撤销提交，且绝不推送）
+# 4. 构建 + 上线（失败则撤销提交，且绝不推送）
 if build_deploy; then
   mark_deployed
   say "OK     上线成功 · out/ $(du -sh "$OUT" | cut -f1) · gz $(find "$OUT" -name '*.gz' | wc -l) 个"
@@ -283,7 +317,7 @@ else
   exit 1
 fi
 
-# 4. 确认部署成功之后，才把代码备份到 GitHub
+# 5. 确认部署成功之后，才把代码备份到 GitHub
 if [ "$COMMITTED" = "0" ]; then
   say "PUSH  跳过（本次没有新提交）"
   exit 0
