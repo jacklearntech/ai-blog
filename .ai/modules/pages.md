@@ -41,6 +41,50 @@ Two deliberate choices here, both easy to "fix" into a bug:
   would re-create the duplicate-fact problem that ADR-005 exists to prevent — except this duplicate
   would sit in `src/`, where nothing checks it.
 
+## Metadata Routes (machine-facing files)
+
+Some files in `out/` are not pages and are not produced by a post-build script either — they come
+from a **metadata route** in `src/app/`. This is the mechanism to use for any machine-facing file:
+
+| Output        | Source              | Purpose                                                    |
+| ------------- | ------------------- | ---------------------------------------------------------- |
+| `/robots.txt` | `src/app/robots.ts` | Crawler policy                                             |
+
+Two rules apply to all of them:
+
+1. **They must declare `export const dynamic = "force-static"`.** Under `output: 'export'` Next
+   otherwise treats a metadata route as a possibly-dynamic handler and **fails the build outright**
+   with *`export const dynamic = "force-static"/export const revalidate not configured`*. The first
+   attempt at `src/app/robots.ts` died exactly this way — worth remembering before writing the next
+   one.
+2. **Never restate a fact inside them.** If a metadata route ever needs the site address (a sitemap
+   is the obvious next case), read it from `site.config.json` instead of typing the domain in.
+   See ADR-005.
+
+### Why there is no public/ directory
+
+Machine-facing files could also be dropped into a public folder, but that door is deliberately closed
+here, for two reasons. First, no such directory exists in this repo. Second — and this is the one that
+actually bites — the name `public` is **not** in the commit whitelist of `ops/release.sh`, so anything
+placed there would serve correctly on the server and never reach GitHub. A file that is live but absent
+from the backup is the worst failure mode available, so metadata routes are the only route.
+
+Note the deliberate formatting: backticks in these docs mean "this is a real repository path", so a
+path that does not exist is written plain rather than quoted. `npm run check:docs` enforces the same
+rule mechanically, and the correct response to it flagging a non-existent path is to stop presenting
+that path as real — not to relax the check.
+
+### Why `robots.txt` says nothing but "allow everything"
+
+`robots.txt` is a **request to well-behaved crawlers, not access control**. Everything this site
+actually wants to keep out — scanners, probe paths, empty user agents — is already answered with
+`444` at the nginx layer. Copying those rules here would publish the blocklist to precisely the
+people it is aimed at, and would not stop anyone who ignores `robots.txt` anyway. "Allow everything"
+is also the honest description of a public blog with no admin area, no API and no private paths.
+
+There is intentionally no `Sitemap:` line: `/sitemap.xml` does not exist yet, and pointing crawlers
+at a 404 is worse than saying nothing.
+
 ## SSG Strategy
 
 - **`generateStaticParams()`**: Each dynamic route (`[slug]`, `[tag]`) exports this function to enumerate all valid paths at build time.

@@ -30,6 +30,7 @@ ai-blog/
 │   │   ├── page.tsx                  # Homepage — post list
 │   │   ├── globals.css               # Tailwind entry + theme tokens + prose styles
 │   │   ├── favicon.ico               # Site icon (lives here, NOT in a public/ dir)
+│   │   ├── robots.ts                 # Metadata route → out/robots.txt at build time
 │   │   ├── posts/[slug]/page.tsx     # Individual post detail page
 │   │   └── tags/
 │   │       ├── page.tsx              # Tag index / cloud
@@ -73,6 +74,10 @@ ai-blog/
   `src/app/favicon.ico` and is picked up by the App Router convention. An earlier version of this
   file documented a `public/` directory, which never existed — an example of the doc drift that
   `npm run check:docs` now catches.
+  Creating one would not help either: `public` is **not** in the commit whitelist of
+  `ops/release.sh`, so a file placed there would serve correctly on the server and yet never be
+  pushed to GitHub. Machine-facing files therefore go in as **metadata routes** under `src/app/`
+  — see `.ai/modules/pages.md`.
 - `.htaccess` and `.well-known/` exist only on the server and are gitignored — they are deployment
   artifacts, not repository content.
 
@@ -101,6 +106,7 @@ ai-blog/
 | `/tags`         | SSG  | `src/app/tags/page.tsx`         | All tags with counts     |
 | `/tags/[tag]`   | SSG  | `src/app/tags/[tag]/page.tsx`   | Posts filtered by tag    |
 | `/rss.xml`      | File | `scripts/generate-rss.ts`       | RSS 2.0 feed             |
+| `/robots.txt`   | File | `src/app/robots.ts`             | Crawler policy (build-time metadata route) |
 
 Route params become **file names** in the build output. See `.ai/modules/pages.md` for the naming
 rules that follow from this.
