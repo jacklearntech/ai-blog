@@ -16,6 +16,31 @@ All routes use Next.js App Router with static site generation (SSG). Every page 
 | `src/app/tags/page.tsx`           | `/tags`         | Tag index with counts            |
 | `src/app/tags/[tag]/page.tsx`     | `/tags/:tag`    | Posts filtered by single tag     |
 
+## RSS Entry Points
+
+`/rss.xml` is **not a route**. It is written into `out/` after `next build` by
+`scripts/generate-rss.ts` (ADR-002), so there is no page component to hang a link off. The feed is
+surfaced from three places instead:
+
+| Entry point              | Location                                          | Purpose                                                        |
+| ------------------------ | ------------------------------------------------- | -------------------------------------------------------------- |
+| Homepage subscribe pill  | `src/app/page.tsx`                                | The visible button a reader actually clicks                     |
+| Footer link              | `src/components/Footer.tsx`                        | Reachable from article and tag pages as well                    |
+| Head autodiscovery       | `src/app/layout.tsx` → `metadata.alternates.types` | Lets a feed reader find the feed from the site URL alone        |
+
+The glyph is `src/components/RssIcon.tsx` — a hand-written inline SVG, so no icon-library dependency
+enters the client bundle.
+
+Two deliberate choices here, both easy to "fix" into a bug:
+
+- **Every entry point uses the relative path `/rss.xml`.** Relative hrefs resolve against whichever
+  host serves the page, which is exactly what is needed when the same build output is published to
+  two different origins (see `site.config.json`). It also keeps domains out of `src/` completely.
+- **`metadataBase` in `src/app/layout.tsx` comes from `site.config.json`.** That is what turns the relative
+  `alternates` value into an absolute URL in the emitted `<link>` tag. Hardcoding a domain next to it
+  would re-create the duplicate-fact problem that ADR-005 exists to prevent — except this duplicate
+  would sit in `src/`, where nothing checks it.
+
 ## SSG Strategy
 
 - **`generateStaticParams()`**: Each dynamic route (`[slug]`, `[tag]`) exports this function to enumerate all valid paths at build time.

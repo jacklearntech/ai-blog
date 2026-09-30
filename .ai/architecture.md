@@ -6,7 +6,8 @@
 
 AI Blog is a statically-generated personal blog built with Next.js (App Router). It renders MDX
 articles to pure HTML at build time, requiring zero server-side runtime. The site supports tag-based
-navigation, syntax-highlighted code blocks, and RSS feed generation.
+navigation, syntax-highlighted code blocks, and an RSS feed with visible subscribe entry points plus
+`<link rel="alternate">` autodiscovery.
 
 - **Language**: Chinese (zh-CN) — all UI text and content are in Chinese
 - **Author**: Jack
@@ -88,6 +89,11 @@ still happily serving `/` (which maps to `index.html`).
   Server Components, which is compatible with Turbopack and static export. See ADR-001.
 - **Post-build script for RSS**: a Node script writing directly to `out/rss.xml` is more reliable
   under static export than a Route Handler. See ADR-002.
+- **Make the feed discoverable, don't assume it will be guessed**: because `/rss.xml` has no route,
+  it is surfaced three ways — a subscribe pill on the homepage, a link in the footer, and a
+  `<link rel="alternate" type="application/rss+xml">` emitted from `metadata.alternates.types` in
+  `src/app/layout.tsx`. All three use the relative path `/rss.xml`, and `metadataBase` is read from
+  `site.config.json`, so no domain is duplicated into `src/`.
 - **Server as the content source, GitHub as backup**: publish runs commit → build → self-check →
   go live → push, so a broken build can never reach the remote. See
   `.ai/decisions/ADR-003-reverse-sync-publish.md`.

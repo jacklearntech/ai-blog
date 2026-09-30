@@ -39,7 +39,8 @@ ai-blog/
 │   │   ├── Header.tsx                # Site navigation bar
 │   │   ├── Footer.tsx                # Site footer (ICP + 公安备案)
 │   │   ├── PostCard.tsx              # Post summary card (list view)
-│   │   └── TagList.tsx               # Tag badge list component
+│   │   ├── TagList.tsx               # Tag badge list component
+│   │   └── RssIcon.tsx               # Inline RSS glyph (subscribe entries on homepage + footer)
 │   │
 │   └── lib/
 │       ├── posts.ts                  # Core: read/parse/sort/filter MDX files
@@ -84,6 +85,7 @@ ai-blog/
 | Components        | `src/components/**`            | Reusable UI primitives                             |
 | Styling           | `src/app/globals.css`          | Theme tokens, prose typography, dark mode          |
 | RSS Generation    | `scripts/generate-rss.ts`      | Post-build XML feed creation                       |
+| RSS Discovery     | `src/app/layout.tsx`           | Autodiscovery `<link>` + metadataBase from `site.config.json` |
 | Output Path Guard | `scripts/check-export-paths.ts`| Fail the build if any output path name is escaped   |
 | Docs Check        | `scripts/check-docs.ts`        | Keep docs honest about domains, paths, npm scripts |
 | Release           | `ops/release.sh`               | Build, self-check, go live, back up to GitHub      |
