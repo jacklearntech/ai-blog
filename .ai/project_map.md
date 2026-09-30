@@ -31,6 +31,7 @@ ai-blog/
 │   │   ├── globals.css               # Tailwind entry + theme tokens + prose styles
 │   │   ├── favicon.ico               # Site icon (lives here, NOT in a public/ dir)
 │   │   ├── robots.ts                 # Metadata route → out/robots.txt at build time
+│   │   ├── sitemap.ts                # Metadata route → out/sitemap.xml at build time
 │   │   ├── posts/[slug]/page.tsx     # Individual post detail page
 │   │   └── tags/
 │   │       ├── page.tsx              # Tag index / cloud
@@ -91,6 +92,8 @@ ai-blog/
 | Styling           | `src/app/globals.css`          | Theme tokens, prose typography, dark mode          |
 | RSS Generation    | `scripts/generate-rss.ts`      | Post-build XML feed creation                       |
 | RSS Discovery     | `src/app/layout.tsx`           | Autodiscovery `<link>` + metadataBase from `site.config.json` |
+| Sitemap           | `src/app/sitemap.ts`           | Build-time URL inventory derived from `content/`   |
+| Crawler Policy    | `src/app/robots.ts`            | `/robots.txt` rules + the `Sitemap:` pointer       |
 | Output Path Guard | `scripts/check-export-paths.ts`| Fail the build if any output path name is escaped   |
 | Docs Check        | `scripts/check-docs.ts`        | Keep docs honest about domains, paths, npm scripts |
 | Release           | `ops/release.sh`               | Build, self-check, go live, back up to GitHub      |
@@ -106,7 +109,8 @@ ai-blog/
 | `/tags`         | SSG  | `src/app/tags/page.tsx`         | All tags with counts     |
 | `/tags/[tag]`   | SSG  | `src/app/tags/[tag]/page.tsx`   | Posts filtered by tag    |
 | `/rss.xml`      | File | `scripts/generate-rss.ts`       | RSS 2.0 feed             |
-| `/robots.txt`   | File | `src/app/robots.ts`             | Crawler policy (build-time metadata route) |
+| `/robots.txt`   | File | `src/app/robots.ts`             | Crawler policy + `Sitemap:` pointer (build-time metadata route) |
+| `/sitemap.xml`  | File | `src/app/sitemap.ts`            | URL inventory — home, tag index, posts, tag pages |
 
 Route params become **file names** in the build output. See `.ai/modules/pages.md` for the naming
 rules that follow from this.

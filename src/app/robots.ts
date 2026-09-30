@@ -1,4 +1,5 @@
 import type { MetadataRoute } from "next";
+import siteConfig from "../../site.config.json";
 
 /**
  * /robots.txt —— 由 App Router 的「元数据路由」在构建期生成到 out/robots.txt。
@@ -18,11 +19,13 @@ import type { MetadataRoute } from "next";
  * （扫描器、漏洞探测路径、空 UA）已经在 nginx 层返回 444 —— 那些不该写进 robots.txt。
  * robots.txt 是**对善意爬虫的请求**，不是访问控制；把防护写在这里只会把规则告诉对手。
  *
- * 暂不声明 Sitemap 指令
- * --------------------
- * 本站还没有 sitemap.xml。指向一个不存在的文件比不写更糟 —— 爬虫会反复请求 404，
- * 而这个项目刚刚才因为「同一个事实的错误副本」吃过一次亏（ADR-005）。
- * 等真的有了 sitemap，再在这里加一行，并且地址要从 site.config.json 取。
+ * 声明 Sitemap 指令
+ * ----------------
+ * 指向的 /sitemap.xml 由同目录的 src/app/sitemap.ts 在构建期一并生成 —— 两者同时存在、
+ * 同时缺席，这是「不指向一个不存在的文件」唯一可靠的保证方式。前一轮刻意没写这一行，
+ * 就是因为当时 sitemap 还不存在：爬虫反复来吃 404 是有真实代价的。
+ * 地址是**绝对** URL（robots.txt 规范如此要求，与上面的 allow 路径不同），
+ * 取值来自 site.config.json，不在代码里复述域名（ADR-005）。
  */
 /**
  * **这一行不是可选的。** 在 `output: 'export'` 下，元数据路由默认被当作可能动态渲染的
@@ -40,5 +43,6 @@ export default function robots(): MetadataRoute.Robots {
       userAgent: "*",
       allow: "/",
     },
+    sitemap: `${siteConfig.canonicalOrigin}/sitemap.xml`,
   };
 }

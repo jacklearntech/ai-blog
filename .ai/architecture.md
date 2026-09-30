@@ -99,6 +99,12 @@ still happily serving `/` (which maps to `index.html`).
   `.ai/decisions/ADR-003-reverse-sync-publish.md`.
 - **Fail the build on bad output paths**: rather than fixing broken routes one by one, the build
   refuses to produce them at all. See `.ai/decisions/ADR-004-output-path-guard.md`.
+- **Build the sitemap from `content/`, not from the output directory**: `src/app/sitemap.ts` uses the
+  same reading functions the pages use, so it lists only navigable pages. Walking `out/` for `.html`
+  files would be the obvious shortcut and would drag in `out/404.html`, `out/_not-found.html` and the
+  RSC prefetch payloads that static export leaves behind. Both metadata routes read the site address
+  from `site.config.json` and need `force-static` under `output: 'export'`, and `src/app/robots.ts`
+  emits the pointer to the sitemap — the two are one unit. See `.ai/modules/pages.md`.
 - **One registry for site facts**: externally-visible addresses live only in `site.config.json`.
   Build and release scripts read from it and **fail rather than fall back** to a guess. See
   `.ai/decisions/ADR-005-single-source-of-site-facts.md`.

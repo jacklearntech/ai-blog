@@ -46,9 +46,10 @@ Two deliberate choices here, both easy to "fix" into a bug:
 Some files in `out/` are not pages and are not produced by a post-build script either — they come
 from a **metadata route** in `src/app/`. This is the mechanism to use for any machine-facing file:
 
-| Output        | Source              | Purpose                                                    |
-| ------------- | ------------------- | ---------------------------------------------------------- |
-| `/robots.txt` | `src/app/robots.ts` | Crawler policy                                             |
+| Output         | Source                | Purpose                                                      |
+| -------------- | --------------------- | ------------------------------------------------------------ |
+| `/robots.txt`  | `src/app/robots.ts`   | Crawler policy                                               |
+| `/sitemap.xml` | `src/app/sitemap.ts`  | URL inventory — home, tag index, every post, every tag page   |
 
 Two rules apply to all of them:
 
@@ -57,9 +58,9 @@ Two rules apply to all of them:
    with *`export const dynamic = "force-static"/export const revalidate not configured`*. The first
    attempt at `src/app/robots.ts` died exactly this way — worth remembering before writing the next
    one.
-2. **Never restate a fact inside them.** If a metadata route ever needs the site address (a sitemap
-   is the obvious next case), read it from `site.config.json` instead of typing the domain in.
-   See ADR-005.
+2. **Never restate a fact inside them.** Both metadata routes need the site address, and both read it
+   from `site.config.json` instead of typing the domain in. That is the pattern to copy for the next
+   one. See ADR-005.
 
 ### Why there is no public/ directory
 
@@ -82,8 +83,36 @@ actually wants to keep out — scanners, probe paths, empty user agents — is a
 people it is aimed at, and would not stop anyone who ignores `robots.txt` anyway. "Allow everything"
 is also the honest description of a public blog with no admin area, no API and no private paths.
 
-There is intentionally no `Sitemap:` line: `/sitemap.xml` does not exist yet, and pointing crawlers
-at a 404 is worse than saying nothing.
+The one directive beyond the rules is the `Sitemap:` line, and it is safe to include only because
+`/sitemap.xml` is produced by a sibling metadata route in the same build — see below. An earlier
+version of this file deliberately omitted that line while the sitemap did not exist yet, on the
+grounds that pointing crawlers at a 404 is worse than saying nothing.
+
+### What `/sitemap.xml` lists, and why not "every `.html` in the output"
+
+The sitemap is built from the same `content/` reading functions the site itself uses
+(`getAllPosts()` / `getAllTags()`), so it lists exactly four kinds of URL: the home page, the tag
+index, every post, and every tag page — 11 entries at the time of writing.
+
+Globbing the output directory instead would be the obvious shortcut and is wrong: `out/` also
+contains `404.html` and `_not-found.html`, plus a pile of RSC prefetch payloads under `out/tags/`
+(`__next._full.txt`, `__next._tree.txt`, one `<tag>.txt` per tag). Those are build artefacts, not
+pages; the sitemap should describe the set a reader can actually navigate to by clicking.
+
+Two properties worth preserving if this file is ever edited:
+
+- **Absolute URLs, always from `canonicalOrigin`, even on the mirror.** Same rule as the RSS feed:
+  one body of content served from two domains can only have one canonical address, so the mirror's
+  own copy of the sitemap also points at the primary. Making the mirror self-canonical would be a
+  change to `site.config.json`, never a conditional inside the route.
+- **`lastmod` on the static pages is the newest post's date, not `new Date()`.** A build timestamp
+  changes on every deploy and would claim the whole site was modified today; once crawlers learn the
+  signal is noise, the entire `lastmod` column stops being read. Home and tag index genuinely only
+  change when a post is added, so the post date is both truthful and more useful.
+
+Tag URLs here are **percent-encoded** (`/tags/Claude%20Code`), while `generateStaticParams()` returns
+the raw tag. That is not an inconsistency — it is the same rule as everywhere else, and getting it
+backwards is what caused the original tag-page 404s. See the hard rules below.
 
 ## SSG Strategy
 
