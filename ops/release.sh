@@ -138,6 +138,12 @@ build_deploy() {
 
   check / 200 || failed=1
   [ -f "$OUT/rss.xml" ]   && { check /rss.xml 200 || failed=1; }
+
+  # 机器可读文件（robots / sitemap）。它们和 rss.xml 是同一类：**没有任何人会主动访问**，
+  # 坏了也没有肉眼可见的症状 —— 只有爬虫在悄悄吃 404。所以必须由自检兜底。
+  # 用 [ -f ] 守卫与 rss.xml 同理：文件被有意移除时不该让发布失败。
+  [ -f "$OUT/robots.txt" ]  && { check /robots.txt 200 || failed=1; }
+  [ -f "$OUT/sitemap.xml" ] && { check /sitemap.xml 200 || failed=1; }
   check /no-such-page-xyz 404 || failed=1
 
   post=$(cd "$OUT/posts" 2>/dev/null && ls *.html 2>/dev/null | head -1)
