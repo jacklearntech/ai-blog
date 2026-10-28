@@ -152,3 +152,11 @@ body {
   font-weight: 600;
   background: rgba(128, 128, 128, 0.05);
 }
+
+/* 表格里的行内代码常常是没有空格的长路径（如 /user/profile/<id>/<noteId>?xsec_token=…），
+   默认不换行会把整张表撑出正文宽度。允许在任意位置断行，代价只是长串折成两行。 */
+.prose th code,
+.prose td code {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}

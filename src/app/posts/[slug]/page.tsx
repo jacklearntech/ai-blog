@@ -5,6 +5,7 @@ import path from "path";
 import matter from "gray-matter";
 import { compileMDX } from "next-mdx-remote/rsc";
 import rehypePrettyCode from "rehype-pretty-code";
+import remarkGfm from "remark-gfm";
 import { getPostBySlug, getAllPosts } from "@/lib/posts";
 
 const contentDirectory = path.join(process.cwd(), "content");
@@ -39,6 +40,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
     source: content,
     options: {
       mdxOptions: {
+        remarkPlugins: [remarkGfm],
         rehypePlugins: [
           [rehypePrettyCode, { theme: "github-dark", keepBackground: true }],
         ],

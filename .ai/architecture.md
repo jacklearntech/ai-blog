@@ -1,4 +1,4 @@
-<!-- last-verified: 2026-09-30 -->
+<!-- last-verified: 2026-10-28 -->
 
 # Architecture
 
@@ -22,7 +22,7 @@ navigation, syntax-highlighted code blocks, and an RSS feed with visible subscri
 | Language       | TypeScript                     | Type safety across the stack           |
 | Styling        | Tailwind CSS v4                | Utility-first CSS, CSS-first config    |
 | Content        | MDX + gray-matter              | Articles with frontmatter metadata     |
-| MDX Rendering  | next-mdx-remote/rsc            | Server-component MDX compilation       |
+| MDX Rendering  | next-mdx-remote/rsc + remark-gfm | Server-component MDX compilation, GFM tables |
 | Code Highlight | rehype-pretty-code + Shiki     | VS Code-quality syntax highlighting    |
 | RSS            | rss + custom post-build script | Static XML feed generation             |
 | Deployment     | Nginx (primary) + Vercel (mirror) | Two targets, same build output      |
@@ -43,7 +43,7 @@ gray-matter (frontmatter parsing)
       │                              ▼
       │                        Static HTML in out/
       │
-      └──► next-mdx-remote/rsc ──► compileMDX() with rehype-pretty-code
+      └──► next-mdx-remote/rsc ──► compileMDX() with remark-gfm + rehype-pretty-code
                                          │
                                          ▼
                                    Rendered MDX content (inline in HTML)

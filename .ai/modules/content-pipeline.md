@@ -1,4 +1,4 @@
-<!-- last-verified: 2026-09-30 -->
+<!-- last-verified: 2026-10-28 -->
 
 # Content Pipeline Module
 
@@ -59,6 +59,20 @@ it half-wired is the trap.
 `slug` is derived from the filename, and `generateStaticParams()` in
 `src/app/posts/[slug]/page.tsx` feeds it straight into the output file name. Slugs must therefore be
 **pure ASCII**. See `.ai/modules/pages.md` for the full naming rules.
+
+## MDX Plugins
+
+Compilation happens in `src/app/posts/[slug]/page.tsx` via `compileMDX()`:
+
+- **`remarkPlugins: [remark-gfm]`** — enables GitHub-flavored Markdown, which is what makes
+  `| a | b |` pipe tables render as `<table>`. **Without it a table is not a rendering problem but a
+  silent one: every row collapses into a paragraph of raw pipes and dashes.** Plain `remark` in the
+  MDX pipeline does not include GFM tables. `src/app/globals.css` carries the matching `.prose table`
+  styles, so a table that "looks unstyled" means the plugin is missing, not the CSS.
+- **`rehypePlugins: [rehype-pretty-code]`** — Shiki highlighting for fenced code blocks.
+
+Anything that looks like an HTML tag inside prose (`/explore/<noteId>`) must be wrapped in
+backticks, or MDX parses it as JSX and the build fails.
 
 ## Adding New Fields
 
